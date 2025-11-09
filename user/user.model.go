@@ -1,0 +1,16 @@
+package user
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type User struct {
+	Id        uuid.UUID `json:"id" gorm:"column:id;type:varchar(40);primaryKey"`
+	Name      string    `json:"name" gorm:"column:name;type:varchar(255);not null"`
+	Username  *string   `json:"username" gorm:"column:username;unique;type:varchar(255)"`
+	Password  *string   `json:"-" gorm:"select:false;column:password;type:varchar(255)"`
+	CreatedAt time.Time `json:"-" gorm:"column:created_at;type:timestamptz"`
+	UpdatedAt time.Time `json:"-" gorm:"column:updated_at;type:timestamptz"`
+}
