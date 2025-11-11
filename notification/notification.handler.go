@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"encoding/json"
 	"fmt"
 	"go-sse/user"
 	"go-sse/util"
@@ -26,7 +27,7 @@ func GetNotificationsHandler(c *gin.Context) {
 	validationErrors := util.Validate(getNotificationsDto)
 	if len(validationErrors) > 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Bad Request",
+			"message": "bad request",
 			"code":    "VALIDATION_ERROR",
 			"errors":  validationErrors,
 		})
@@ -66,7 +67,7 @@ func StreamHandler(c *gin.Context) {
 	newUuid, _ := uuid.NewRandom()
 	client := &Client{
 		Id:      newUuid,
-		channel: make(chan string),
+		channel: make(chan Notification),
 		done:    make(chan struct{}),
 	}
 	broker.AddClient(authUser.Id, client)
@@ -86,8 +87,9 @@ func StreamHandler(c *gin.Context) {
 
 	for {
 		select {
-		case msg := <-client.channel:
-			fmt.Fprintf(w, "data: %s\n\n", msg)
+		case notification := <-client.channel:
+			notificationJson, _ := json.Marshal(notification)
+			fmt.Fprintf(w, "data: %s\n\n", string(notificationJson))
 			flusher.Flush()
 
 		case <-c.Request.Context().Done():
@@ -101,6 +103,7 @@ func StreamHandler(c *gin.Context) {
 func NotifyHandler(c *gin.Context) {
 	userIdParam := c.Param("userId")
 	userId, _ := uuid.Parse(userIdParam)
+	title := c.PostForm("title")
 	message := c.PostForm("message")
 
 	broker := GetBroker()
@@ -108,9 +111,22 @@ func NotifyHandler(c *gin.Context) {
 	clients, ok := broker.clients[userId]
 	broker.mu.RUnlock()
 
+	notification, err := CreateNotification(CreateNotificationDTO{
+		UserId:  userId,
+		Title:   title,
+		Message: message,
+	})
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"message": "internal server error",
+		})
+		return
+	}
+
 	if ok {
 		for _, client := range clients {
-			client.channel <- message
+			client.channel <- notification
 		}
 	}
 

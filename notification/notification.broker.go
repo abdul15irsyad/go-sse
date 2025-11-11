@@ -9,7 +9,7 @@ import (
 
 type Client struct {
 	Id      uuid.UUID
-	channel chan string
+	channel chan Notification
 	done    chan struct{}
 }
 
@@ -26,7 +26,7 @@ func GetBroker() *Broker {
 	return &broker
 }
 
-func (b *Broker) SendMessageToUser(userId uuid.UUID, message string) {
+func (b *Broker) SendNotificationToUser(userId uuid.UUID, notification Notification) {
 	b.mu.RLock()
 	clients, ok := b.clients[userId]
 	b.mu.RUnlock()
@@ -38,7 +38,7 @@ func (b *Broker) SendMessageToUser(userId uuid.UUID, message string) {
 
 	for _, c := range clients {
 		select {
-		case c.channel <- message:
+		case c.channel <- notification:
 		default:
 			fmt.Printf("client %s channel full, dropping message\n", c.Id)
 		}

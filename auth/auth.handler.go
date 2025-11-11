@@ -17,7 +17,7 @@ func LoginHandler(c *gin.Context) {
 	validationErrors := util.Validate(loginDTO)
 	if len(validationErrors) > 0 {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": "Validation Error",
+			"message": "validation error",
 			"errors":  validationErrors,
 		})
 		return
@@ -79,7 +79,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 	if len(validationErrors) > 0 {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
-			"message": "Bad Request",
+			"message": "bad request",
 			"code":    "VALIDATION_ERROR",
 			"errors":  validationErrors,
 		})
@@ -97,7 +97,7 @@ func RegisterHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Register",
+		"message": "register",
 		"data":    newUser,
 	})
 }
