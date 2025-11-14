@@ -100,7 +100,7 @@ func StreamHandler(c *gin.Context) {
 	}
 }
 
-func NotifyHandler(c *gin.Context) {
+func SendHandler(c *gin.Context) {
 	userIdParam := c.Param("userId")
 	userId, _ := uuid.Parse(userIdParam)
 	title := c.PostForm("title")

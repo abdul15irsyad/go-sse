@@ -1,6 +1,7 @@
 package notification
 
 import (
+	"fmt"
 	"go-sse/util"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 )
 
 func CreateNotification(dto CreateNotificationDTO) (Notification, error) {
+	fmt.Println("dto", dto)
 	newUuid, _ := uuid.NewRandom()
 
 	newNotification := Notification{

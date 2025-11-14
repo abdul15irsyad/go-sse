@@ -2,10 +2,10 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"go-sse/user"
 	"go-sse/util"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -14,15 +14,15 @@ import (
 )
 
 func AuthMiddleware(c *gin.Context) {
-	authorization := c.GetHeader("Authorization")
+	accessToken, err := c.Cookie(ACCESS_TOKEN_KEY)
+	fmt.Println("accessToken", accessToken)
 
-	if authorization == "" {
+	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"message": "invalid credential",
 		})
 		return
 	}
-	accessToken := strings.Split(authorization, " ")[1]
 
 	sub, err := util.ParseJWT(accessToken)
 	if err != nil {

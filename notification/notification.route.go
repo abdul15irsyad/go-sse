@@ -11,5 +11,5 @@ func NotificationRoute(router *gin.Engine) {
 	notification.Use(auth.AuthMiddleware)
 	notification.GET("/", GetNotificationsHandler)
 	notification.GET("/stream", StreamHandler)
-	notification.POST("/notify/:userId", NotifyHandler)
+	notification.POST("/send/:userId", SendHandler)
 }

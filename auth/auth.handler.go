@@ -11,6 +11,8 @@ import (
 	"gorm.io/gorm"
 )
 
+const ACCESS_TOKEN_KEY string = "access_token"
+
 func LoginHandler(c *gin.Context) {
 	var loginDTO LoginDTO
 	c.ShouldBindJSON(&loginDTO)
@@ -44,7 +46,7 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 
-	token, err := util.CreateJWT(authUser.Id.String())
+	accessToken, err := util.CreateJWT(authUser.Id.String())
 	if err != nil {
 		fmt.Println(err)
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
@@ -52,7 +54,35 @@ func LoginHandler(c *gin.Context) {
 		})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": token})
+
+	c.SetCookie(
+		ACCESS_TOKEN_KEY,
+		accessToken,
+		3600,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "login success",
+	})
+}
+
+func Logout(c *gin.Context) {
+	c.SetCookie(
+		ACCESS_TOKEN_KEY,
+		"",
+		-1,
+		"/",
+		"localhost",
+		false,
+		true,
+	)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "logout success",
+	})
 }
 
 func RegisterHandler(c *gin.Context) {
