@@ -69,7 +69,7 @@ func LoginHandler(c *gin.Context) {
 	})
 }
 
-func Logout(c *gin.Context) {
+func LogoutHandler(c *gin.Context) {
 	c.SetCookie(
 		ACCESS_TOKEN_KEY,
 		"",
@@ -90,7 +90,6 @@ func RegisterHandler(c *gin.Context) {
 	c.ShouldBindJSON(&registerDTO)
 	validationErrors := util.Validate(registerDTO)
 	trimmedUsername := strings.TrimSpace(registerDTO.Username)
-	fmt.Println(trimmedUsername)
 	if usernameError := util.FindSlice(&validationErrors, func(validationError *util.ValidationError) bool {
 		return validationError.Field == "username"
 	}); usernameError == nil {

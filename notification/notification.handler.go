@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-sse/user"
-	"go-sse/util"
-	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -21,23 +19,9 @@ func GetNotificationsHandler(c *gin.Context) {
 		return
 	}
 	authUser, _ := authUserContext.(user.User)
+	status := c.Query("status")
 
-	var getNotificationsDto GetNotificationsDto
-	c.ShouldBind(&getNotificationsDto)
-	validationErrors := util.Validate(getNotificationsDto)
-	if len(validationErrors) > 0 {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "bad request",
-			"code":    "VALIDATION_ERROR",
-			"errors":  validationErrors,
-		})
-		return
-	}
-
-	data, count, err := GetPaginatedNotifications(authUser.Id, GetNotificationsDto{
-		Page:  getNotificationsDto.Page,
-		Limit: getNotificationsDto.Limit,
-	})
+	data, count, err := GetPaginatedNotifications(authUser.Id, status)
 
 	if err != nil {
 		c.Error(err)
@@ -46,11 +30,44 @@ func GetNotificationsHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "get notifications",
-		"metadata": gin.H{
-			"total_data": count,
-			"total_page": math.Ceil(float64(count) / float64(getNotificationsDto.Limit)),
-		},
-		"data": data,
+		"count":   count,
+		"data":    data,
+	})
+}
+
+func GetCountNotificationsHandler(c *gin.Context) {
+	authUserContext, _ := c.Get("authUser")
+	authUser, _ := authUserContext.(user.User)
+	status := c.Query("status")
+
+	count, err := GetCountNotifications(authUser.Id, status)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "get " + status + "notifications",
+		"count":   count,
+	})
+}
+
+func ReadNotificationHandler(c *gin.Context) {
+	authUserContext, _ := c.Get("authUser")
+	authUser, _ := authUserContext.(user.User)
+	idParam := c.Param("id")
+	id, _ := uuid.Parse(idParam)
+
+	err := ReadNotification(id, authUser.Id)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "notification read",
 	})
 }
 
@@ -88,7 +105,9 @@ func StreamHandler(c *gin.Context) {
 	for {
 		select {
 		case notification := <-client.channel:
+			fmt.Println("new notification", notification)
 			notificationJson, _ := json.Marshal(notification)
+			fmt.Println("notification", string(notificationJson))
 			fmt.Fprintf(w, "data: %s\n\n", string(notificationJson))
 			flusher.Flush()
 
@@ -105,10 +124,13 @@ func SendHandler(c *gin.Context) {
 	userId, _ := uuid.Parse(userIdParam)
 	title := c.PostForm("title")
 	message := c.PostForm("message")
+	fmt.Println("title", title)
+	fmt.Println("userId", userId)
 
 	broker := GetBroker()
 	broker.mu.RLock()
 	clients, ok := broker.clients[userId]
+	fmt.Println("clients", clients)
 	broker.mu.RUnlock()
 
 	notification, err := CreateNotification(CreateNotificationDTO{
@@ -126,6 +148,9 @@ func SendHandler(c *gin.Context) {
 
 	if ok {
 		for _, client := range clients {
+			fmt.Println("client", client)
+			fmt.Println("*client", *client)
+			fmt.Println("notification", notification)
 			client.channel <- notification
 		}
 	}

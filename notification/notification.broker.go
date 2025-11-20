@@ -36,6 +36,8 @@ func (b *Broker) SendNotificationToUser(userId uuid.UUID, notification Notificat
 		return
 	}
 
+	fmt.Println("clients", clients)
+
 	for _, c := range clients {
 		select {
 		case c.channel <- notification:

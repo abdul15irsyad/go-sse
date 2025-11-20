@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"go-sse/user"
 	"go-sse/util"
 	"net/http"
@@ -15,7 +14,6 @@ import (
 
 func AuthMiddleware(c *gin.Context) {
 	accessToken, err := c.Cookie(ACCESS_TOKEN_KEY)
-	fmt.Println("accessToken", accessToken)
 
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{

@@ -7,9 +7,11 @@ import (
 )
 
 func NotificationRoute(router *gin.Engine) {
-	notification := router.Group("/notifications")
+	notification := router.Group("/notif")
 	notification.Use(auth.AuthMiddleware)
 	notification.GET("/", GetNotificationsHandler)
+	notification.GET("/count", GetCountNotificationsHandler)
+	notification.GET("/read/:id", ReadNotificationHandler)
 	notification.GET("/stream", StreamHandler)
 	notification.POST("/send/:userId", SendHandler)
 }

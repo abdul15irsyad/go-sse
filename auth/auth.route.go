@@ -7,5 +7,6 @@ func AuthRoute(router *gin.Engine) {
 	auth.POST("/login", LoginHandler)
 	auth.POST("/register", RegisterHandler)
 	auth.Use(AuthMiddleware)
+	auth.POST("/logout", LogoutHandler)
 	auth.GET("/user", UserHandler)
 }
