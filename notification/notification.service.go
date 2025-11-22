@@ -28,7 +28,13 @@ func CreateNotification(dto CreateNotificationDTO) (Notification, error) {
 	return newNotification, nil
 }
 
-func GetPaginatedNotifications(userId uuid.UUID, status string) ([]Notification, int64, error) {
+func GetPaginatedNotifications(userId uuid.UUID, page int, limit int, status string) ([]Notification, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
 	notifications := []Notification{}
 	query := util.DB.Model(&Notification{})
 	if status == "unread" {
@@ -36,7 +42,8 @@ func GetPaginatedNotifications(userId uuid.UUID, status string) ([]Notification,
 	} else if status == "read" {
 		query = query.Where("read_at IS NOT NULL")
 	}
-	if err := query.Where("user_id = ?", userId.String()).Order("created_at DESC").Find(&notifications).Error; err != nil {
+	query = query.Where("user_id = ?", userId.String())
+	if err := query.Limit(limit).Offset((page - 1) * limit).Order("created_at DESC").Find(&notifications).Error; err != nil {
 		return nil, 0, err
 	}
 

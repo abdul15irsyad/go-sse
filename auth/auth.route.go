@@ -8,5 +8,6 @@ func AuthRoute(router *gin.Engine) {
 	auth.POST("/register", RegisterHandler)
 	auth.Use(AuthMiddleware)
 	auth.POST("/logout", LogoutHandler)
-	auth.GET("/user", UserHandler)
+	auth.GET("/user", AuthUserHandler)
+	auth.GET("/friends", GetFriendsHandler)
 }

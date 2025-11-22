@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-sse/user"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -20,8 +21,10 @@ func GetNotificationsHandler(c *gin.Context) {
 	}
 	authUser, _ := authUserContext.(user.User)
 	status := c.Query("status")
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 
-	data, count, err := GetPaginatedNotifications(authUser.Id, status)
+	data, count, err := GetPaginatedNotifications(authUser.Id, page, limit, status)
 
 	if err != nil {
 		c.Error(err)
@@ -119,24 +122,28 @@ func StreamHandler(c *gin.Context) {
 	}
 }
 
-func SendHandler(c *gin.Context) {
-	userIdParam := c.Param("userId")
-	userId, _ := uuid.Parse(userIdParam)
-	title := c.PostForm("title")
-	message := c.PostForm("message")
-	fmt.Println("title", title)
-	fmt.Println("userId", userId)
+func PokeHandler(c *gin.Context) {
+	authUserContext, ok := c.Get("authUser")
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "unauthorized",
+		})
+		return
+	}
+	authUser, _ := authUserContext.(user.User)
+
+	frendIdParam := c.Param("frendId")
+	frendId, _ := uuid.Parse(frendIdParam)
 
 	broker := GetBroker()
 	broker.mu.RLock()
-	clients, ok := broker.clients[userId]
-	fmt.Println("clients", clients)
+	clients, ok := broker.clients[frendId]
 	broker.mu.RUnlock()
 
 	notification, err := CreateNotification(CreateNotificationDTO{
-		UserId:  userId,
-		Title:   title,
-		Message: message,
+		UserId:  frendId,
+		Title:   "Friend Poke",
+		Message: fmt.Sprintf("you just poked by %s", authUser.Name),
 	})
 
 	if err != nil {

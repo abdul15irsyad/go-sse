@@ -5,6 +5,7 @@ import (
 	"go-sse/user"
 	"go-sse/util"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -131,7 +132,7 @@ func RegisterHandler(c *gin.Context) {
 	})
 }
 
-func UserHandler(c *gin.Context) {
+func AuthUserHandler(c *gin.Context) {
 	authUser, ok := c.Get("authUser")
 
 	if !ok {
@@ -144,5 +145,31 @@ func UserHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "auth user",
 		"data":    authUser,
+	})
+}
+
+func GetFriendsHandler(c *gin.Context) {
+	authUserContext, ok := c.Get("authUser")
+	if !ok {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"message": "unauthorized",
+		})
+		return
+	}
+	authUser, _ := authUserContext.(user.User)
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	data, count, err := user.GetPaginatedFriends(authUser.Id, page, limit)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "get friends",
+		"count":   count,
+		"data":    data,
 	})
 }

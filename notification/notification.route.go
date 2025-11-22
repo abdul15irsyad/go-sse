@@ -13,5 +13,5 @@ func NotificationRoute(router *gin.Engine) {
 	notification.GET("/count", GetCountNotificationsHandler)
 	notification.GET("/read/:id", ReadNotificationHandler)
 	notification.GET("/stream", StreamHandler)
-	notification.POST("/send/:userId", SendHandler)
+	notification.POST("/poke/:frendId", PokeHandler)
 }
